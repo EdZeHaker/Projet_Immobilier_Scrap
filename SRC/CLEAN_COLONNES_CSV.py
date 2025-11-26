@@ -72,5 +72,5 @@ df["Surface_m2"] = df["Titre"].apply(extract_surface)
 # CONCAT sans créer de doublons
 df_final = pd.concat([df.drop(columns=["Détails"], errors="ignore"), details_df], axis=1)
 
-df_final.to_csv("paruvendu_villes_clean.csv", index=False, encoding="utf-8")
-print("OK : paruvendu_villes_clean.csv généré sans doublons")
+df_final.to_csv("paruvendu_villes_detail.csv", index=False, encoding="utf-8")
+print("OK : paruvendu_villes_detail.csv généré")
