@@ -6,26 +6,25 @@ df = pd.read_csv("paruvendu_villes_5pages.csv")
 
 # Nettoyage Détails
 df["Détails"] = df["Détails"].astype(str).str.replace("\n"," ").str.replace("\xa0"," ")
+df["Description"] = df["Description"].astype(str).str.replace("\n"," ").str.replace("_", " ").str.replace(" -", " ")
 
 # Fonction simple
 def parse_details(details_str):
     details_str = str(details_str)
 
     out = {
-        "Pieces": None,
-        "Chambres": None,
-        "Garage": None,
-        "Balcon": None,
-        "Ascenseur": None,
-        "Terrain_m2": None,
-        "DPE": None,
-        "Autre": None
+        "Pieces": "Non communiqué",
+        "Chambres": "Non communiqué",
+        "Garage": "Non communiqué",
+        "Balcon": "Non communiqué",
+        "Ascenseur": "Non communiqué",
+        "Terrain_m2": "Non communiqué",
+        "DPE": "Non communiqué",
     }
-
     # Pièces
-    pieces_match = re.search(r"(\d+)(?:/(\d+))?\s*pi[eè]ce", details_str, re.I)
+    pieces_match = re.search(r"(\d+)(?:/(\d+))?\s*pi[eè]ce(?:s|\(s\))?", details_str, re.I)
     if pieces_match:
-        out["Pieces"] = pieces_match.group(0)
+        out["Pieces"] = pieces_match.group(1)
 
     # Chambres
     chambres_match = re.search(r"(\d+)\s*chambre", details_str, re.I)
@@ -36,26 +35,30 @@ def parse_details(details_str):
     for col in ["Garage", "Balcon", "Ascenseur"]:
         if col.lower() in details_str.lower():
             out[col] = "Oui"
+        else :
+            out[col] = "Non communiqué"
 
     # Terrain
     terrain_match = re.search(r"terrain\s*(\d+)", details_str, re.I)
     if terrain_match:
         out["Terrain_m2"] = terrain_match.group(1)
+    else :
+        out["Terrain_m2"] = "Non communiqué"
 
     # DPE
     dpe_match = re.search(r"DPE\s*:\s*([A-G])", details_str, re.I)
     if dpe_match:
         out["DPE"] = dpe_match.group(1)
-
-    # Autre
-    parts = [p.strip() for p in details_str.split(",")]
-    known = ["pièce", "chambre", "garage", "balcon", "ascenseur", "terrain", "DPE"]
-    other = [p for p in parts if not any(k in p.lower() for k in known)]
-
-    if other:
-        out["Autre"] = "; ".join(other)
+    else :
+        out["DPE"] = "Non communiqué"
 
     return out
+
+#Prix m2
+df["Prix_m2"] = df["Prix"].str.extract(r"(\d[\d\s\u202f]+€ / m2)")
+df["Prix"] = df["Prix"].str.replace(r"\*?\d[\d\s\u202f]+€ / m2", "", regex = True)
+df["Prix"] = df["Prix"].str.strip()
+df = df.rename(columns={"Prix" : "Prix_de_vente"})
 
 # Parsing
 details_df = df["Détails"].apply(parse_details).apply(pd.Series)
